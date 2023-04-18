@@ -63,11 +63,11 @@ void print_file_info(Fat12Entry *entry) {
             return; // unused entry
         case 0x05:
             //Muestro nombre y extension de archivo borrado
-            printf("Archivo borrado: [?%.7s.%.3s]\n", entry->name, entry->extension);
+            printf("Archivo borrado: [?%.8s.%.3s]\n", entry->filename, entry->extension);
             return;
         case 0xE5:
             //Muestro nombre y extension
-            printf("Archivo que comienza con 0xE5: [%c%.7s.%.3s]\n", 0xE5, entry->name, entry->extension);
+            printf("Archivo que comienza con 0xE5: [%c%.8s.%.3s]\n", 0xE5, entry->filename, entry->extension);
             break;
         default:
             switch (entry->attributes[0])
