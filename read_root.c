@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 typedef struct {
     unsigned char first_byte;
     unsigned char start_chs[3];
@@ -59,31 +58,23 @@ typedef struct {
 void print_file_info(Fat12Entry *entry) {
 
     switch(entry->filename[0]) {
-        case 0x00:
-            return; // unused entry
-        case 0x05:
-            //Muestro nombre y extension de archivo borrado
-            printf("Archivo borrado: [?%.8s.%.3s]\n", entry->filename, entry->extension);
+        case 0x00: // unused entry
             return;
-        case 0xE5:
-            //Muestro nombre y extension
-            printf("Archivo que comienza con 0xE5: [%c%.8s.%.3s]\n", 0xE5, entry->filename, entry->extension);
+        case 0xE5: // deleted file 
+            printf("Archivo que comienza con 0xE5: [%.7s.%.3s]\n", entry->name, entry->extension);
             break;
         default:
-            switch (entry->attributes[0])
-            {
-            case 0x20:
-                //Es archivo
-                printf("Archivo: [%.8s.%.3s]\n", entry->filename, entry->extension);
-            break;
-            case 0x10:
-                //Es directorio
-                printf("Directorio: [%.1s%.7s]\n",  entry->filename, entry->name);
+            switch (entry->attributes[0]){
+            case 0x20: // is a file
+                printf("Archivo: [%.1s%.7s.%.3s]\n", entry->filename, entry->name, entry->extension);
+                break;
+            case 0x10: // is a directory
+                printf("Directorio: [%.1s%.7s]\n", entry->filename, entry->name);
+                break;
             default:
                 break;
             }
     }
-   
 }
 
 int main() {
@@ -99,7 +90,7 @@ int main() {
    
     for(i=0; i<4; i++) {        
         if(pt[i].partition_type == 1) {
-            printf("Encontrada particion FAT12 %d\n", i);
+            printf("Se encontro filesystem FAT12 en la partición %d\n", i + 1);
             break;
         }
     }
@@ -114,13 +105,13 @@ int main() {
    
     //printf("En  0x%X, sector size %d, FAT size %d sectors, %d FATs\n\n",
     //       ftell(in), bs.sector_size, bs.fat_size_sectors, bs.number_of_fats);
-    printf("sector size %d, FAT size %d sectors, %d FATs\n\n",
+    printf("sector size %d, FAT size %d sectors, %d FATs\n",
            bs.sector_size, bs.fat_size_sectors, bs.number_of_fats);
                   
     fseek(in, (bs.reserved_sectors-1 + bs.fat_size_sectors * bs.number_of_fats) *
           bs.sector_size, SEEK_CUR);
    
-    printf("Root dir_entries %d \n", bs.root_dir_entries);
+    printf("Root dir_entries %d \n\n", bs.root_dir_entries);
 
     for(i=0; i<bs.root_dir_entries; i++) {
         fread(&entry, sizeof(entry), 1, in);
