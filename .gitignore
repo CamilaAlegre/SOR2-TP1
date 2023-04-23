@@ -1,3 +1,4 @@
+.vscode
 read_mbr
 read_boot
 read_root
