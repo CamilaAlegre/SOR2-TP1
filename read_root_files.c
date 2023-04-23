@@ -55,7 +55,9 @@ typedef struct {
     unsigned int size_of_file;
 } __attribute((packed)) Fat12Entry;
 
-void print_file_info(Fat12Entry *entry){
+unsigned short firstCluster;
+
+void print_file_info(Fat12Entry *entry, Fat12BootSector bs){
 
     switch (entry->filename[0]){
     case 0x00: // unused entry
@@ -65,11 +67,32 @@ void print_file_info(Fat12Entry *entry){
         break;
     default:
         switch (entry->attributes[0]){
-        case 0x20: // is a file
-            printf("Archivo: [%.1s%.7s.%.3s]\n", entry->filename, entry->name, entry->extension);
+        case 0x20: // is file
+            printf("Archivo: [%.8s.%.3s] ", entry->filename, entry->extension);
+            char *contenido = (char *)malloc(sizeof(char) * (entry->size_of_file));
+
+            FILE *in = fopen("test.img", "rb");
+            fseek(in, firstCluster + (entry->cluster_lowbytes_address - 2) * (bs.sector_size * bs.sectorsPerCluster), SEEK_SET);
+            fread(contenido, entry->size_of_file, 1, in);
+            printf("Contenido: \n");
+            for (int i = 0; i < entry->size_of_file; i++){
+                printf("%c", contenido[i]);
+            }
+            free(contenido);
+            printf("\n");
             break;
-        case 0x10: // is a directory
+        case 0x10: // is directory
             printf("Directorio: [%.1s%.7s]\n", entry->filename, entry->name);
+
+            FILE *in2 = fopen("test.img", "rb");
+            Fat12Entry entry2;
+            fseek(in2, (29 + ((entry->cluster_lowbytes_address) * bs.sectorsPerCluster)) * bs.sector_size, SEEK_SET);
+
+            for (int i = 0; i < bs.sectorsPerCluster * bs.sector_size / sizeof(entry); i++){
+                fread(&entry2, sizeof(entry), 1, in2);
+                print_file_info(&entry2, bs);
+            }
+
             break;
         default:
             break;
@@ -77,7 +100,8 @@ void print_file_info(Fat12Entry *entry){
     }
 }
 
-int main() {
+int main()
+{
     FILE *in = fopen("test.img", "rb");
     int i;
     PartitionTable pt[4];
@@ -88,8 +112,8 @@ int main() {
     fseek(in, partitionStart, SEEK_SET);
     fread(pt, sizeof(PartitionTable), 4, in);
 
-    for (i = 0; i < 4; i++) {
-        if (pt[i].partition_type == 1) {
+    for (i = 0; i < 4; i++){
+        if (pt[i].partition_type == 1){
             printf("Se encontro filesystem FAT12 en la partición %d\n", i + 1);
             break;
         }
@@ -105,16 +129,18 @@ int main() {
 
     //printf("En  0x%X, sector size %d, FAT size %d sectors, %d FATs\n\n",
     //       ftell(in), bs.sector_size, bs.fat_size_sectors, bs.number_of_fats);
-    printf("sector size %d, FAT size %d sectors, %d FATs\n", 
-        bs.sector_size, bs.fat_size_sectors, bs.number_of_fats);
+    printf("sector size %d, FAT size %d sectors, %d FATs\n",
+            bs.sector_size, bs.fat_size_sectors, bs.number_of_fats);
 
     fseek(in, (bs.reserved_sectors - 1 + bs.fat_size_sectors * bs.number_of_fats) * bs.sector_size, SEEK_CUR);
 
     printf("Root dir_entries %d \n\n", bs.root_dir_entries);
 
-    for (i = 0; i < bs.root_dir_entries; i++) {
+    firstCluster = ftell(in) + bs.root_dir_entries * sizeof(entry);
+
+    for (i = 0; i < bs.root_dir_entries; i++){
         fread(&entry, sizeof(entry), 1, in);
-        print_file_info(&entry);
+        print_file_info(&entry, bs);
     }
 
     // printf("\nLeido Root directory, ahora en 0x%X\n", ftell(in));

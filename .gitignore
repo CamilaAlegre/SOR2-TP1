@@ -2,3 +2,6 @@
 read_mbr
 read_boot
 read_root
+read_root_files
+read_delete
+read_restore
