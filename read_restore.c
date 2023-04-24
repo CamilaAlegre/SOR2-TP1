@@ -61,12 +61,12 @@ void restore_delete(Fat12Entry *entry, FILE *in, int start_file) {
 
     FILE * in2 = fopen("test.img", "r+");
 
-    //Muestro nombre y extension
-    printf("Archivo que comienza con 0xE5: [%c%.8s.%.3s]\n", 0xE5, entry->filename, entry->extension);
+    //Es archivo
+    printf("Archivo: [%.8s.%.3s]\n", entry->filename, entry->extension);
 
     fseek(in2, start_file, SEEK_SET);
-    entry->filename[0] = 'a'; //Seteo cualquier letra que reemplace 0xE5
-    fwrite(&entry, sizeof(entry), 1, in2);
+    entry->filename[0] ='A'; //Seteo 0xE5
+    fwrite(entry->filename, sizeof(entry->filename), 1, in2);
 
     fclose(in2);
 }
