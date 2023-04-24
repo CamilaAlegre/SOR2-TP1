@@ -65,8 +65,8 @@ void delete_file(Fat12Entry *entry, FILE *in, int start_file) {
     printf("Archivo: [%.8s.%.3s]\n", entry->filename, entry->extension);
 
     fseek(in2, start_file, SEEK_SET);
-    entry->filename[0] = 0xE5; //Seteo 0xE5
-    fwrite(&entry, sizeof(entry), 1, in2);
+    entry->filename[0] = 0XE5; //Seteo 0xE5
+    fwrite(entry->filename, sizeof(entry->filename), 1, in2);
 
     fclose(in2);
 }
@@ -99,7 +99,7 @@ int main() {
 
             int start_file = ftell(in) - sizeof(entry);
             delete_file(&entry, in, start_file);
-        }
+       }
     }
    
     fclose(in);
